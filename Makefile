@@ -31,13 +31,19 @@ clean_pyc:
 .PHONY: lint
 lint:
 	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv run flake8 v3io
+	    pipenv run flake8 v3io \
+	    && pipenv run lint
+
+.PHONY: fmt
+fmt:
+	PIPENV_IGNORE_VIRTUALENVS=1 \
+	  	pipenv run fmt
 
 .PHONY: test
 test: clean_pyc
 	PIPENV_IGNORE_VIRTUALENVS=1 \
-	    pipenv run python -m unittest \
-		tests/test_*
+		pipenv run test-unit \
+	    && pipenv run test-integration
 
 .PHONY: update-deps
 update-deps:

@@ -18,13 +18,14 @@ import asyncio
 import v3io.dataplane.request
 import v3io.dataplane.response
 import v3io.dataplane.transport
+import v3io.common
 
 
 class Transport(object):
 
     def __init__(self, logger, endpoint=None, max_connections=None, timeout=None, verbosity=None, retry_intervals=None):
         self._logger = logger
-        self._endpoint = self._get_endpoint(endpoint)
+        self._endpoint = v3io.common.helpers.get_endpoint(endpoint)
         self._timeout = timeout
         self.max_connections = max_connections or 8
         self._connector = aiohttp.TCPConnector()
@@ -59,7 +60,7 @@ class Transport(object):
 
         client_os_error_retry_counter = 0
 
-        while (True):
+        while True:
             try:
                 # call the encoder to get the response
                 async with self._client_session.request(request.method,
@@ -88,24 +89,10 @@ class Transport(object):
                 raise response_error
             except aiohttp.ClientOSError:
                 client_os_error_retry_counter += 1
-                if (client_os_error_retry_counter == len(self.retry_intervals)):
+                if client_os_error_retry_counter == len(self.retry_intervals):
                     raise
 
             await asyncio.sleep(self.retry_intervals[client_os_error_retry_counter])
-
-    @staticmethod
-    def _get_endpoint(endpoint):
-
-        if endpoint is None:
-            endpoint = os.environ.get('V3IO_API')
-
-            if endpoint is None:
-                raise RuntimeError('Endpoints must be passed to context or specified in V3IO_API')
-
-        if not endpoint.startswith('http://') and not endpoint.startswith('https://'):
-            endpoint = 'http://' + endpoint
-
-        return endpoint.rstrip('/')
 
     def _set_log_method(self, verbosity):
         # by default, the log method is null

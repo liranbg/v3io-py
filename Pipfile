@@ -6,9 +6,21 @@ verify_ssl = true
 [dev-packages]
 flake8 = "*"
 twine = "*"
+python-dotenv = ">=0.21.0"
+black = ">=22.10.0"
 
 [packages]
 requests = ">=2.19.1"
 future = ">=0.18.2"
 ujson = ">=3.0.0"
+httpx = ">=0.23.0"
+inflection = ">=0.5.1"
+pydantic = ">=1.10.2"
+jupyter = "*"
 
+[scripts]
+# TODO: do it on all source
+fmt = "black v3io/controlplane"
+lint = "black --check --diff v3io/controlplane"
+test-integration = "python -m unittest discover -s tests -p 'test_*'"
+test-unit = "python -m unittest discover -s unittests -p 'test_*'"

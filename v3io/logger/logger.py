@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import sys
 
 
 class HumanReadableFormatter(logging.Formatter):
@@ -27,27 +28,26 @@ class HumanReadableFormatter(logging.Formatter):
         else:
             more = ''
 
-        return '{0} [{1}] {2}{3}'.format(self.formatTime(record, self.datefmt),
-                                         record.levelname.lower(),
-                                         record.getMessage(),
-                                         more)
+        # take last 30 chars of logger name, if shorter, take all, if longer, take last 30
+        logger_name = record.name[-30:]
+        return '{0} {1:30} [{2}] {3}{4}'.format(self.formatTime(record, self.datefmt),
+                                                logger_name,
+                                                record.levelname.lower(),
+                                                record.getMessage(),
+                                                more)
 
 
 class Logger(object):
 
-    def __init__(self, level='DEBUG'):
-        self._logger = logging.getLogger('root')
-        self._logger.setLevel(level)
+    def __init__(self, level='DEBUG', logger_name=None):
+        self._logger = logging.getLogger('root' if not logger_name else logger_name)
+        self.set_level(level)
         self._handlers = {}
 
     def set_handler(self, handler_name, file, formatter):
 
         # check if there's a handler by this name
         if handler_name in self._handlers:
-
-            # log that we're removing it
-            self.info_with('Replacing logger output')
-
             self._logger.removeHandler(self._handlers[handler_name])
 
         # create a stream handler from the file
@@ -61,6 +61,18 @@ class Logger(object):
 
         # save as the named output
         self._handlers[handler_name] = stream_handler
+
+    def set_level(self, level):
+        self._logger.setLevel(level)
+
+    def get_level(self):
+        return self._logger.getEffectiveLevel()
+
+    def get_child(self, name):
+        new_logger = Logger(logger_name=f"{self._logger.name}.{name}",
+                            level=logging.getLevelName(self._logger.level))
+        new_logger._handlers = self._handlers
+        return new_logger
 
     def debug(self, message, *args):
         self._logger.debug(message, *args)
@@ -85,3 +97,16 @@ class Logger(object):
 
     def error_with(self, message, *args, **kw_args):
         self._logger.error(message, *args, extra={'with': kw_args})
+
+
+logger = None
+
+
+def get_or_create_logger(level='DEBUG', name='root'):
+    global logger
+    if not logger:
+        logger = Logger(level=level, logger_name=name)
+        logger.set_handler('stdout', sys.stdout, HumanReadableFormatter())
+    if logger._logger.name != name:
+        return logger.get_child(name)
+    return logger
