@@ -41,7 +41,8 @@ class TestAttributes(unittest.TestCase):
             for field, value in json.loads(instance.json(exclude_unset=True)).items():
                 self.assertEqual(dummy_data[field], value)
 
-    def _get_dummy_user(self):
+    @staticmethod
+    def _get_dummy_user():
         return {
             "username": "someone",
             "first_name": "b",
@@ -60,7 +61,8 @@ class TestAttributes(unittest.TestCase):
             "admin_status": "up",
         }
 
-    def _get_dummy_usergroup(self):
+    @staticmethod
+    def _get_dummy_usergroup():
         return {
             "name": "some-group",
             "data_access_mode": "enabled",
@@ -70,7 +72,8 @@ class TestAttributes(unittest.TestCase):
             "system_provided": False,
         }
 
-    def _get_dummy_accesskey(self):
+    @staticmethod
+    def _get_dummy_accesskey():
         return {
             "tenant_id": "b7c663b1-a8ee-49a9-ad62-ceae7e751ec8",
             "ttl": 315360000,
@@ -87,7 +90,8 @@ class TestAttributes(unittest.TestCase):
             "planes": ["control", "data"],
         }
 
-    def _get_dummy_job(self):
+    @staticmethod
+    def _get_dummy_job():
         return {
             "kind": "some.job.kind",
             "params": "",

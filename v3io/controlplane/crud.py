@@ -50,8 +50,8 @@ class _Base(pydantic.BaseModel, abc.ABC):
     @classmethod
     async def get(cls, client: "APIClient", resource_id, include=None):
         if not cls.__ALLOW_GET_DETAIL__:
-            app_services = await cls.list(client)
-            return app_services[0]
+            resources = await cls.list(client)
+            return resources[0]
 
         params = {}
         if include:
