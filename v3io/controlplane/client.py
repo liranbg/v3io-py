@@ -228,7 +228,7 @@ class APIClient:
         )
         return response.json()
 
-    def update(
+    async def update(
         self, resource_name, resource_id, attributes, relationships=None, **kwargs
     ):
         """
@@ -239,21 +239,21 @@ class APIClient:
         :param relationships: the resource relationships
         :param kwargs: additional arguments to pass to the request
         """
-        return self._client.put(
+        return await self._client.put(
             f"{inflection.pluralize(resource_name)}/{resource_id}",
             f"Failed to update {resource_name} {resource_id}".strip(),
             json=self.compile_api_request(resource_name, attributes, relationships),
             **kwargs,
         )
 
-    def delete(self, resource_name, resource_id, **kwargs):
+    async def delete(self, resource_name, resource_id, **kwargs):
         """
         Deletes an existing resource
         :param resource_name: the resource name
         :param resource_id: the resource ID to delete
         :param kwargs: additional arguments to pass to the request
         """
-        return self._client.delete(
+        return await self._client.delete(
             f"{inflection.pluralize(resource_name)}/{resource_id}",
             f"Failed to delete {resource_name} {resource_id}".strip(),
             **kwargs,
