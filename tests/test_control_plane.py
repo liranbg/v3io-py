@@ -86,7 +86,7 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
 
         # list users filter by username
         users = await v3io.controlplane.User.list(self.client,
-                                                   filter_by={"username": self.test_username})
+                                                  filter_by={"username": self.test_username})
         self.assertEqual(1, len(users))
         self.assertEqual(self.test_username, users[0].username)
 
@@ -109,65 +109,48 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
     #     me = await v3io.controlplane.Users.self(self.client)
     #     self.assertEqual(self.test_username, me.attributes.username)
     #
-
-    # async def test_list_get_update_delete_user(self):
-    #     users = await v3io.controlplane.User.list(self.client)
-    #     self.assertNotEqual(0, len(users))
-    #
-    #     user = await v3io.controlplane.User.get(self.client, users[0].id)
-    #     self.assertIsNotNone(user)
-    #     self.assertIsNotNone(users[0].id, user.id)
-    #
-    #     # user.username = "new_username"
-    #     # await user.update(self.client)
-    #
-    #     await user.delete(self.client)
-    #     with self.assertRaises(httpx.HTTPStatusError) as exc:
-    #         await v3io.controlplane.User.get(self.client, user.id)
-    #         self.assertEqual()
-
     async def test_create_update_user(self):
         password = v3io.common.helpers.random_string(8) + "A1!"
         user = await self._create_dummy_user(password=password)
 
         user.first_name = "liran2"
-        updated_user = await user.update(self.client)
-        self.assertEqual(user.first_name, updated_user.first_name)
+        await user.update(self.client)
+        self.assertEqual(user.first_name, "liran2")
 
-    # async def test_add_remove_from_user_group(self):
-    #     # create user group
-    #     group_name = v3io.common.helpers.random_string(8)
-    #     user_group = await v3io.controlplane.UserGroups.create(self.client, name=group_name)
-    #     self._resources_to_delete.append(user_group)
-    #     self.assertEqual(group_name, user_group.attributes.name)
-    #     self.assertNotEqual("", user_group.id)
-    #
-    #     # create user
-    #     user = await self._create_dummy_user()
-    #
-    #     user_group = await user_group.get(self.client, user_group.id, include=["users"])
-    #     self.assertEqual(0, len(user_group.relationships))
-    #
-    #     # add user to group
-    #     await user.add_to_group(self.client, user_group.id)
-    #
-    #     # get user group and verify user is in it
-    #     user_group = await user_group.get(self.client, user_group.id, include=["users"])
-    #     self.assertEqual(1, len(user_group.relationships["users"]["data"]))
-    #
-    #     # remove user from group
-    #     await user.remove_from_group(self.client, user_group.id)
-    #
-    #     # get user group and verify user is NOT in it
-    #     user_group = await user_group.get(self.client, user_group.id, include=["users"])
-    #     self.assertEqual(0, len(user_group.relationships))
-    #
-    #     # delete user
-    #     await user.delete(self.client)
-    #
-    #     # delete user group
-    #     await user_group.delete(self.client)
-    #
+    async def test_add_remove_from_user_group(self):
+        # create user group
+        group_name = v3io.common.helpers.random_string(8)
+        user_group = await v3io.controlplane.UserGroup.create(self.client, name=group_name)
+        self._resources_to_delete.append(user_group)
+        self.assertEqual(group_name, user_group.name)
+        self.assertNotEqual("", user_group.id)
+
+        # create user
+        user = await self._create_dummy_user()
+
+        user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
+        self.assertEqual(0, len(user_group.relationships))
+
+        # add user to group
+        await user.add_to_group(self.client, user_group.id)
+
+        # get user group and verify user is in it
+        user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
+        self.assertEqual(1, len(user_group.relationships["users"]["data"]))
+
+        # remove user from group
+        await user.remove_from_group(self.client, user_group.id)
+
+        # get user group and verify user is NOT in it
+        user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
+        self.assertEqual(0, len(user_group.relationships))
+
+        # delete user
+        await user.delete(self.client)
+
+        # delete user group
+        await user_group.delete(self.client)
+
     # async def test_list_app_services(self):
     #     app_services = await v3io.controlplane.AppServices.list(self.client)
     #     self.assertNotEqual(0, len(app_services))
@@ -176,18 +159,19 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         username = v3io.common.helpers.random_string(10) if username is None else username
         password = v3io.common.helpers.random_string(8) + "A1!" if password is None else password
         user = await v3io.controlplane.User.create(self.client,
-                                                    username=username,
-                                                    password=password,
-                                                    email=f"{username}@iguazio.com",
-                                                    first_name="liran",
-                                                    last_name="aa")
+                                                   username=username,
+                                                   password=password,
+                                                   email=f"{username}@iguazio.com",
+                                                   first_name="liran",
+                                                   last_name="aa")
         self._resources_to_delete.append(user)
         self.assertEqual(username, user.username)
         return user
 
     async def _create_test_privilege_client(self):
         client = v3io.controlplane.client.APIClient(endpoint=self.api_url)
-        await client.login(username=self.config["TEST_PRIVILEGED_USERNAME"], password=self.config["TEST_PRIVILEGED_PASSWORD"])
+        await client.login(username=self.config["TEST_PRIVILEGED_USERNAME"],
+                           password=self.config["TEST_PRIVILEGED_PASSWORD"])
         return client
 
     async def _create_test_client(self):

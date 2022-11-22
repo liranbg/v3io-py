@@ -10,6 +10,8 @@ class _CrudFactory:
     def create(crud_type: str) -> "_BaseCrud":
         if crud_type == "user":
             return _UserCrud
+        elif crud_type == "user_group":
+            return _UserGroup
         else:
             raise Exception("Unknown type")
 
@@ -19,8 +21,10 @@ class _BaseCrud(pydantic.BaseModel, abc.ABC):
     type: str = ""
 
     @classmethod
-    async def create(cls, http_client: APIClient, attributes):
-        return await http_client.create(cls._as_resource_name(), attributes)
+    async def create(cls, http_client: APIClient, attributes, relationships=None):
+        return await http_client.create(
+            cls._as_resource_name(), attributes, relationships
+        )
 
     @classmethod
     async def get(cls, http_client: APIClient, resource_id, **kwargs):
@@ -42,11 +46,17 @@ class _BaseCrud(pydantic.BaseModel, abc.ABC):
         return await http_client.list(cls._as_resource_name(), params=params)
 
     @classmethod
-    async def update(cls, http_client: APIClient, resource_id, attributes):
-        await http_client.update(cls._as_resource_name(), resource_id, attributes)
+    async def update(
+        cls, http_client: APIClient, resource_id, attributes, relationships=None
+    ):
+        await http_client.update(
+            cls._as_resource_name(), resource_id, attributes, relationships
+        )
 
     @classmethod
-    async def delete(cls, http_client: APIClient, resource_id, ignore_missing=False):
+    async def delete(
+        cls, http_client: APIClient, resource_id, ignore_missing: bool = False
+    ):
         await http_client.delete(
             cls._as_resource_name(), resource_id, ignore_missing=ignore_missing
         )
@@ -58,3 +68,7 @@ class _BaseCrud(pydantic.BaseModel, abc.ABC):
 
 class _UserCrud(_BaseCrud):
     type: str = "user"
+
+
+class _UserGroup(_BaseCrud):
+    type: str = "user_group"

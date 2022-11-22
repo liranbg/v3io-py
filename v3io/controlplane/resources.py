@@ -28,19 +28,15 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
                 return default
 
         orm_mode = True
+        use_enum_values = True
         getter_dict = _BaseGetter
 
         # be forward compatible
         extra = "allow"
 
     @staticmethod
-    def get_crud(crud_type) -> _BaseCrud:
+    def get_crud(crud_type: str) -> _BaseCrud:
         return _CrudFactory.create(crud_type)
-
-    # @classmethod
-    # async def create(cls, http_client: APIClient) -> "_BaseResource":
-    #     created_resource = await cls.get_crud(cls._as_resource_name()).create(http_client)
-    #     return cls.from_orm(created_resource)
 
     @classmethod
     async def get(
@@ -65,13 +61,22 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
         )
         return [cls.from_orm({"data": item}) for item in list_resource["data"]]
 
-    async def update(self, http_client: APIClient) -> "_BaseResource":
+    async def update(
+        self, http_client: APIClient, relationships=None
+    ) -> "_BaseResource":
         await self.get_crud(self.type).update(
-            http_client, self.id, attributes=self._fields_to_attributes()
+            http_client,
+            self.id,
+            attributes=self._fields_to_attributes(),
+            relationships=relationships,
         )
-        return await self.get(http_client, self.id)
 
-    async def delete(self, http_client: APIClient, ignore_missing=False):
+        # TODO: when backend returns the updatred object within response, use it. until then, do a get to make sure
+        # we have the latest copy
+        updated_resource = await self.get(http_client, self.id)
+        self.__dict__.update(updated_resource)
+
+    async def delete(self, http_client: APIClient, ignore_missing: bool = False):
         await self.get_crud(self.type).delete(http_client, self.id, ignore_missing)
 
     @classmethod
@@ -79,13 +84,11 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
         return cls.__fields__["type"].default
 
     def _fields_to_attributes(self):
-        attributes = copy.deepcopy(self.__dict__)
-        del attributes["type"]
-        del attributes["id"]
-        del attributes["relationships"]
-        # TODO: remove this
-        del attributes["assigned_policies"]
-        return attributes
+        return self.dict(
+            exclude={"type", "relationships", "id"},
+            exclude_none=True,
+            exclude_unset=True,
+        )
 
 
 class User(_BaseResource):
@@ -104,17 +107,16 @@ class User(_BaseResource):
     admin_status: str = ""
     password: SecretStr = Field(None, exclude=True)
 
-    # TODO: method params
     @classmethod
     async def create(
         cls,
         http_client: APIClient,
-        username,
-        password,
-        email,
-        first_name,
-        last_name,
-        assigned_policies=None,
+        username: str,
+        password: str,
+        email: str,
+        first_name: str,
+        last_name: str,
+        assigned_policies: typing.List[TenantManagementRoles] = None,
     ) -> "User":
         """
         Create a new user
@@ -133,5 +135,90 @@ class User(_BaseResource):
                 "password": password,
                 "assigned_policies": assigned_policies,
             },
+        )
+        return cls.from_orm(created_resource)
+
+    async def add_to_group(self, http_client: APIClient, group_id: str):
+        """
+        Add a user to a group
+
+        1. get the user
+        2. add the group to the user
+        3. update the user
+        """
+        user = await self.get(http_client, self.id, include=["user_groups"])
+
+        if "user_groups" not in user.relationships:
+            user.relationships["user_groups"] = {"data": []}
+        if group_id not in [
+            group["id"] for group in user.relationships["user_groups"]["data"]
+        ]:
+            user.relationships["user_groups"]["data"].append(
+                {"id": group_id, "type": "user_group"}
+            )
+            await user.update(http_client, relationships=user.relationships)
+
+    async def remove_from_group(self, http_client: APIClient, group_id: str):
+        """
+        Remove a user from a group
+        """
+        user = await self.get(http_client, self.id, include=["user_groups"])
+        if "user_groups" in user.relationships:
+            user.relationships["user_groups"]["data"] = [
+                group
+                for group in user.relationships["user_groups"]["data"]
+                if group["id"] != group_id
+            ]
+            await user.update(http_client, relationships=user.relationships)
+
+
+class UserGroup(_BaseResource):
+    type: str = "user_group"
+    name: str = ""
+    description: str = None
+    data_access_mode: str = "enabled"
+    gid: int = 0
+    kind: str = "local"
+    assigned_policies: typing.List[TenantManagementRoles] = []
+    system_provided: bool = False
+
+    @classmethod
+    async def create(
+        cls,
+        http_client: APIClient,
+        name: str,
+        assigned_policies: typing.List[TenantManagementRoles] = None,
+        description: str = None,
+        gid: int = None,
+        user_ids=None,
+    ) -> "UserGroup":
+        """
+        Create a new user
+        :param http_client: APIClient instance
+        :param name: The name of the user group
+        :param assigned_policies: The assigned policies of the user group (optional)
+        :param gid: The gid of the user group (optional, leave empty for auto-assign)
+        :param description: The description of the user group (optional)
+        :param user_ids: The user ids to add to the user group (optional)
+        """
+        if not assigned_policies:
+            assigned_policies = [
+                TenantManagementRoles.data.value,
+                TenantManagementRoles.application_admin.value,
+            ]
+        relationships = {}
+        if user_ids:
+            relationships["users"] = {
+                "data": [{"id": user_id, "type": "user"} for user_id in user_ids]
+            }
+        created_resource = await cls.get_crud(cls._as_resource_name()).create(
+            http_client,
+            attributes={
+                "name": name,
+                "description": description,
+                "gid": gid,
+                "assigned_policies": assigned_policies,
+            },
+            relationships=relationships,
         )
         return cls.from_orm(created_resource)
