@@ -14,4 +14,4 @@
 #
 
 from .client import APIClient as Client
-from .resources import User, UserGroup
+from .resources import User, UserGroup, AccessKey, Job

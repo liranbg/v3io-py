@@ -1,13 +1,14 @@
 import abc
+import json
 import typing
-import copy
+import datetime
 
 import pydantic
 from pydantic import Field, SecretStr
 from pydantic.utils import GetterDict
 
 from v3io.controlplane.client import APIClient
-from v3io.controlplane.constants import TenantManagementRoles
+from v3io.controlplane.constants import TenantManagementRoles, SessionPlanes
 from v3io.controlplane.cruds import _CrudFactory, _BaseCrud
 
 
@@ -71,8 +72,7 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
             relationships=relationships,
         )
 
-        # TODO: when backend returns the updatred object within response, use it. until then, do a get to make sure
-        # we have the latest copy
+        # TODO: build cls from response when BE will return the updated resource within the response body
         updated_resource = await self.get(http_client, self.id)
         self.__dict__.update(updated_resource)
 
@@ -137,6 +137,16 @@ class User(_BaseResource):
             },
         )
         return cls.from_orm(created_resource)
+
+    @classmethod
+    async def self(cls, http_client: APIClient) -> "User":
+        """
+        Get the current user
+        """
+        user = await cls.get_crud(cls._as_resource_name()).get_custom(
+            http_client, "self"
+        )
+        return cls.from_orm(user)
 
     async def add_to_group(self, http_client: APIClient, group_id: str):
         """
@@ -222,3 +232,64 @@ class UserGroup(_BaseResource):
             relationships=relationships,
         )
         return cls.from_orm(created_resource)
+
+
+class AccessKey(_BaseResource):
+    type: str = "access_key"
+    tenant_id: str = ""
+    ttl: int = 315360000  # 10 years
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    group_ids: typing.List[str] = []
+    uid: int = 0
+    gids: typing.List[int] = []
+    expires_at: int = 0  # EPOCH
+    interface_kind: str = "web"
+    label: str = ""
+    kind: str = "accessKey"
+    planes: typing.List[SessionPlanes] = SessionPlanes.all()
+
+    @classmethod
+    async def create(
+        cls,
+        http_client: APIClient,
+        planes: typing.List[SessionPlanes] = SessionPlanes.all(),
+        label: str = None,
+    ):
+        """
+        Create a new user
+        :param http_client: APIClient instance
+        :param planes: The planes of the access key (optional)
+        :param label: The label of the access key (optional)
+        """
+        created_resource = await cls.get_crud(cls._as_resource_name()).create(
+            http_client,
+            attributes={
+                "planes": planes,
+                "label": label,
+            },
+        )
+        return cls.from_orm(created_resource)
+
+
+class Job(_BaseResource):
+    type: str = "job"
+    kind: str = ""
+    params: str = ""
+    max_total_execution_time: int = 3 * 60 * 60  # in seconds
+    max_worker_execution_time: typing.Optional[int] = None  # in seconds
+    delay: float = 0  # in seconds
+    state: str = "created"
+    result: str = ""
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    on_success: typing.List[dict] = None
+    on_failure: typing.List[dict] = None
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    handler: str = ""
+    ctx_id: str = ""
+
+    async def delete(self, http_client: "APIClient", **kwargs):
+        raise RuntimeError("This resource is not delete-able")
+
+    async def update(self, http_client: "APIClient", **kwargs):
+        raise RuntimeError("This resource is not update-able")

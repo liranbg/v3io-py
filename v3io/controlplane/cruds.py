@@ -6,12 +6,17 @@ from v3io.controlplane.client import APIClient
 
 
 class _CrudFactory:
+    # TODO: found better way
     @staticmethod
     def create(crud_type: str) -> "_BaseCrud":
         if crud_type == "user":
             return _UserCrud
         elif crud_type == "user_group":
-            return _UserGroup
+            return _UserGroupCrud
+        elif crud_type == "access_key":
+            return _AccessKeyCrud
+        elif crud_type == "job":
+            return _JobCrud
         else:
             raise Exception("Unknown type")
 
@@ -62,6 +67,10 @@ class _BaseCrud(pydantic.BaseModel, abc.ABC):
         )
 
     @classmethod
+    async def get_custom(cls, http_client: APIClient, path, **kwargs):
+        return await http_client.request("GET", path, **kwargs)
+
+    @classmethod
     def _as_resource_name(cls):
         return cls.__fields__["type"].default
 
@@ -70,5 +79,13 @@ class _UserCrud(_BaseCrud):
     type: str = "user"
 
 
-class _UserGroup(_BaseCrud):
+class _UserGroupCrud(_BaseCrud):
     type: str = "user_group"
+
+
+class _AccessKeyCrud(_BaseCrud):
+    type: str = "access_key"
+
+
+class _JobCrud(_BaseCrud):
+    type: str = "job"
