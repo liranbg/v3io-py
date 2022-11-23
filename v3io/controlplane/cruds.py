@@ -6,7 +6,6 @@ from v3io.controlplane.client import APIClient
 
 
 class _CrudFactory:
-    # TODO: found better way
     @staticmethod
     def create(crud_type: str) -> "_BaseCrud":
         if crud_type == "user":
@@ -75,6 +74,7 @@ class _BaseCrud(pydantic.BaseModel, abc.ABC):
         return cls.__fields__["type"].default
 
 
+# TODO: why we need these classes?
 class _UserCrud(_BaseCrud):
     type: str = "user"
 

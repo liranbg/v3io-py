@@ -1,7 +1,7 @@
 import unittest
 import json
 
-from v3io.controlplane.models.attributes import User, AccessKey, UserGroup, Job
+from v3io.controlplane import User, AccessKey, UserGroup, Job
 from v3io.logger.logger import get_or_create_logger
 
 

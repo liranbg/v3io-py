@@ -7,12 +7,16 @@ class _BaseEnum(enum.Enum):
         return [member.value for member in cls]
 
 
-class SessionPlanes(_BaseEnum):
+class _BaseEnumStr(str, _BaseEnum):
+    pass
+
+
+class SessionPlanes(_BaseEnumStr):
     data = "data"
     control = "control"
 
 
-class TenantManagementRoles(enum.Enum):
+class TenantManagementRoles(_BaseEnumStr):
     it_admin = "IT Admin"
     application_admin = "Application Admin"
     security_admin = "Security Admin"
@@ -30,14 +34,14 @@ class TenantManagementRoles(enum.Enum):
         return [TenantManagementRoles.application_admin]
 
 
-class ConfigTypes(enum.Enum):
+class ConfigTypes(_BaseEnumStr):
     artifact_version_manifest = "artifact_version_manifest"
     events = "events"
     cluster = "cluster"
     app_services = "app_services"
 
 
-class JobStates(enum.Enum):
+class JobStates(_BaseEnumStr):
     completed = "completed"
     failed = "failed"
     canceled = "canceled"
