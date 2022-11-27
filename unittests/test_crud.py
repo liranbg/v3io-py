@@ -1,15 +1,16 @@
 import unittest
 import json
 
-from v3io.controlplane.crud import Users, AccessKeys, UserGroups, Jobs
+from v3io.controlplane import User, AccessKey, UserGroup, Job
 from v3io.logger.logger import get_or_create_logger
 
 
+# TODO: fix this test file
 class TestCrud(unittest.TestCase):
     def setUp(self) -> None:
         self.logger = get_or_create_logger()
         self.logger.info_with("Starting test", test_id=self.id())
-        self._crud_modules = [Users, AccessKeys, UserGroups, Jobs]
+        self._crud_modules = [User, AccessKey, UserGroup, Job]
 
     def test_sanity(self):
         for model in self._crud_modules:
@@ -29,7 +30,7 @@ class TestCrud(unittest.TestCase):
             )
             self.assertEqual(dummy_data["id"], instance.id)
             for field, value in json.loads(
-                instance.attributes.json(exclude_unset=True)
+                instance.json(exclude_unset=True)
             ).items():
                 self.assertEqual(dummy_data["attributes"][field], value)
 
