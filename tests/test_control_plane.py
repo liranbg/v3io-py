@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 import os
 
@@ -197,6 +198,9 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         )
         self._resources_to_delete.append(user)
         self.assertEqual(username, user.username)
+
+        # wait for user to be created
+        await asyncio.sleep(10)
         return user
 
     async def _create_test_privilege_client(self):

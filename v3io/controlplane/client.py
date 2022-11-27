@@ -80,7 +80,13 @@ class _BaseHTTPClient:
         response = await self._session.request(
             method, endpoint, cookies=self._cookies, headers=headers, **kwargs
         )
-        self._logger.debug_with("Received response", status_code=response.status_code)
+        ctx = None
+        try:
+            response_json = response.json()
+            ctx = response_json.get("meta", {}).get("ctx")
+        except:
+            pass
+        self._logger.debug_with("Received response", status_code=response.status_code, ctx=ctx)
         if response.is_error and response.status_code not in ignore_status_codes:
             log_kwargs = copy.deepcopy(kwargs)
             log_kwargs.update({"method": method, "path": path})
