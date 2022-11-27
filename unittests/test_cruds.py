@@ -10,28 +10,26 @@ class TestCrud(unittest.TestCase):
     def setUp(self) -> None:
         self.logger = get_or_create_logger()
         self.logger.info_with("Starting test", test_id=self.id())
-        self._crud_modules = [User, AccessKey, UserGroup, Job]
+        self._resources = [User, AccessKey, UserGroup, Job]
 
     def test_sanity(self):
-        for model in self._crud_modules:
-            self.logger.info_with("Testing model", model=model.__name__)
-            dummy_data = getattr(self, f"_get_dummy_{model().type}")()
+        for resource in self._resources:
+            self.logger.info_with("Testing model", model=resource.__name__)
+            dummy_data = getattr(self, f"_get_dummy_{resource().type}")()
 
             instance = (
-                model.from_orm(dummy_data)
-                if model.__ALLOW_GET_DETAIL__
-                else model.from_orm({"data": dummy_data["data"][0]})
+                resource.from_orm(dummy_data)
+                if resource.get_crud().__ALLOW_GET_DETAIL__
+                else resource.from_orm({"data": dummy_data["data"][0]})
             )
 
             dummy_data = (
                 dummy_data["data"]
-                if model.__ALLOW_GET_DETAIL__
+                if resource.get_crud().__ALLOW_GET_DETAIL__
                 else dummy_data["data"][0]
             )
             self.assertEqual(dummy_data["id"], instance.id)
-            for field, value in json.loads(
-                instance.json(exclude_unset=True)
-            ).items():
+            for field, value in instance._fields_to_attributes().items():
                 self.assertEqual(dummy_data["attributes"][field], value)
 
     @staticmethod
