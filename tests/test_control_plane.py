@@ -90,10 +90,9 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         self.assertNotEqual("", access_key.id)
 
         # update access key
-        # TODO - fix Object of type datetime is not JSON serializable
-        # access_key.label = "my-awesome-label"
-        # await access_key.update(self.client)
-        # self.assertEqual("my-awesome-label", access_key.label)
+        access_key.label = "my-awesome-label"
+        await access_key.update(self.client)
+        self.assertEqual("my-awesome-label", access_key.label)
 
         # delete access key
         await access_key.delete(self.client)
