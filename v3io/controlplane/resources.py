@@ -149,7 +149,6 @@ class User(_BaseResource):
         3. update the user
         """
         user = await self.get(http_client, self.id, include=["user_groups"])
-
         if "user_groups" not in user.relationships:
             user.relationships["user_groups"] = {"data": []}
         if group_id not in [
