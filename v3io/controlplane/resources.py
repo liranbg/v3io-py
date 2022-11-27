@@ -293,7 +293,7 @@ class Job(_BaseResource):
 
 # Below are classes which do not have a corresponding resource in the API
 # but represent operations
-class Configurations(object):
+class ClusterConfigurations(object):
     @classmethod
     async def reload(cls, http_client: "APIClient", config_type: ConfigTypes):
         await http_client.request_job(

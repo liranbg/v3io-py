@@ -5,7 +5,6 @@ from v3io.controlplane import User, AccessKey, UserGroup, Job
 from v3io.logger.logger import get_or_create_logger
 
 
-# TODO: fix this test file
 class TestCrud(unittest.TestCase):
     def setUp(self) -> None:
         self.logger = get_or_create_logger()

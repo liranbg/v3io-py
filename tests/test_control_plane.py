@@ -152,6 +152,7 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(0, len(user_group.relationships))
 
+        # TODO: sometimes it is failed with - removing user from all_users group is forbidden
         # add user to group
         await user.add_to_group(self.client, user_group.id)
 
@@ -174,7 +175,7 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
 
     async def test_misc(self):
         client = await self._create_test_privilege_client()
-        await v3io.controlplane.Configurations.reload(client, v3io.controlplane.constants.ConfigTypes.events)
+        await v3io.controlplane.ClusterConfigurations.reload(client, v3io.controlplane.constants.ConfigTypes.events)
         await client.close()
 
     async def _create_dummy_user(self, username=None, password=None) -> "User":

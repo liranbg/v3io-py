@@ -67,7 +67,6 @@ class _BaseCrud(abc.ABC):
         return inflection.underscore(cls.__name__.strip("_")).replace("_crud", "")
 
 
-# TODO: why we need these classes?
 class _UserCrud(_BaseCrud):
     pass
 
