@@ -159,19 +159,18 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(0, len(user_group.relationships))
 
         # add user to group
-        # TODO: when running it test failed with Failed to update user
-        # await user.add_to_group(self.client, user_group.id)
-        #
-        # # get user group and verify user is in it
-        # user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
-        # self.assertEqual(1, len(user_group.relationships["users"]["data"]))
-        #
-        # # remove user from group
-        # await user.remove_from_group(self.client, user_group.id)
-        #
-        # # get user group and verify user is NOT in it
-        # user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
-        # self.assertEqual(0, len(user_group.relationships))
+        await user.add_to_group(self.client, user_group.id)
+
+        # get user group and verify user is in it
+        user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
+        self.assertEqual(1, len(user_group.relationships["users"]["data"]))
+
+        # remove user from group
+        await user.remove_from_group(self.client, user_group.id)
+
+        # get user group and verify user is NOT in it
+        user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
+        self.assertEqual(0, len(user_group.relationships))
 
         # delete user
         await user.delete(self.client)
