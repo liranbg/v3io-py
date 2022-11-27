@@ -153,7 +153,6 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(0, len(user_group.relationships))
 
-        # TODO: sometimes it is failed with - removing user from all_users group is forbidden
         # add user to group
         await user.add_to_group(self.client, user_group.id)
 
