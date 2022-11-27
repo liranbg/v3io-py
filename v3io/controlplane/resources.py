@@ -1,6 +1,6 @@
 import abc
 import typing
-import datetime
+import inflection
 
 import pydantic
 from pydantic import Field, SecretStr
@@ -15,7 +15,7 @@ from v3io.controlplane.constants import (
 from v3io.controlplane.cruds import _CrudFactory, _BaseCrud
 
 
-class _BaseResource(pydantic.BaseModel, abc.ABC):
+class _BaseResource(pydantic.BaseModel):
     type: str
     id: typing.Optional[typing.Union[int, str]]
     relationships: typing.Optional[dict]
@@ -38,9 +38,11 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
         # be forward compatible
         extra = "allow"
 
-    @staticmethod
-    def get_crud(crud_type: str) -> _BaseCrud:
-        return _CrudFactory.create(crud_type)
+    @classmethod
+    def get_crud(cls) -> _BaseCrud:
+        return _CrudFactory.create(
+            inflection.underscore(cls.__fields__["type"].default)
+        )
 
     @classmethod
     async def get(
@@ -49,9 +51,7 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
         params = {}
         if include:
             params["include"] = ",".join(include)
-        resource = await cls.get_crud(cls._as_resource_name()).get(
-            http_client, resource_id, params=params
-        )
+        resource = await cls.get_crud().get(http_client, resource_id, params=params)
         return cls.from_orm(resource)
 
     @classmethod
@@ -60,15 +60,13 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
         http_client: APIClient,
         filter_by: typing.Optional[typing.Mapping[str, str]] = None,
     ) -> typing.List["_BaseResource"]:
-        list_resource = await cls.get_crud(cls._as_resource_name()).list(
-            http_client, filter_by
-        )
+        list_resource = await cls.get_crud().list(http_client, filter_by)
         return [cls.from_orm({"data": item}) for item in list_resource["data"]]
 
     async def update(
         self, http_client: APIClient, relationships=None
     ) -> "_BaseResource":
-        await self.get_crud(self.type).update(
+        await self.get_crud().update(
             http_client,
             self.id,
             attributes=self._fields_to_attributes(),
@@ -78,13 +76,10 @@ class _BaseResource(pydantic.BaseModel, abc.ABC):
         # TODO: build cls from response when BE will return the updated resource within the response body
         updated_resource = await self.get(http_client, self.id)
         self.__dict__.update(updated_resource)
+        return self
 
     async def delete(self, http_client: APIClient, ignore_missing: bool = False):
-        await self.get_crud(self.type).delete(http_client, self.id, ignore_missing)
-
-    @classmethod
-    def _as_resource_name(cls):
-        return cls.__fields__["type"].default
+        await self.get_crud().delete(http_client, self.id, ignore_missing)
 
     def _fields_to_attributes(self):
         return self.dict(
@@ -128,7 +123,7 @@ class User(_BaseResource):
             TenantManagementRoles.developer.value,
             TenantManagementRoles.application_read_only.value,
         ]
-        created_resource = await cls.get_crud(cls._as_resource_name()).create(
+        created_resource = await cls.get_crud().create(
             http_client,
             attributes={
                 "username": username,
@@ -146,9 +141,7 @@ class User(_BaseResource):
         """
         Get the current user
         """
-        user = await cls.get_crud(cls._as_resource_name()).get_custom(
-            http_client, "self"
-        )
+        user = await cls.get_crud().get_custom(http_client, "self")
         return cls.from_orm(user)
 
     async def add_to_group(self, http_client: APIClient, group_id: str):
@@ -224,7 +217,7 @@ class UserGroup(_BaseResource):
             relationships["users"] = {
                 "data": [{"id": user_id, "type": "user"} for user_id in user_ids]
             }
-        created_resource = await cls.get_crud(cls._as_resource_name()).create(
+        created_resource = await cls.get_crud().create(
             http_client,
             attributes={
                 "name": name,
@@ -241,8 +234,8 @@ class AccessKey(_BaseResource):
     type: str = "access_key"
     tenant_id: str = ""
     ttl: int = 315360000  # 10 years
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
-    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    created_at: str = ""
+    updated_at: str = ""
     group_ids: typing.List[str] = []
     uid: int = 0
     gids: typing.List[int] = []
@@ -265,7 +258,7 @@ class AccessKey(_BaseResource):
         :param planes: The planes of the access key (optional)
         :param label: The label of the access key (optional)
         """
-        created_resource = await cls.get_crud(cls._as_resource_name()).create(
+        created_resource = await cls.get_crud().create(
             http_client,
             attributes={
                 "planes": planes,
@@ -284,10 +277,10 @@ class Job(_BaseResource):
     delay: float = 0  # in seconds
     state: str = "created"
     result: str = ""
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    created_at: str = ""
     on_success: typing.List[dict] = None
     on_failure: typing.List[dict] = None
-    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    updated_at: str = ""
     handler: str = ""
     ctx_id: str = ""
 
