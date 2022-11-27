@@ -7,7 +7,11 @@ from pydantic import Field, SecretStr
 from pydantic.utils import GetterDict
 
 from v3io.controlplane.client import APIClient
-from v3io.controlplane.constants import TenantManagementRoles, SessionPlanes
+from v3io.controlplane.constants import (
+    TenantManagementRoles,
+    SessionPlanes,
+    ConfigTypes,
+)
 from v3io.controlplane.cruds import _CrudFactory, _BaseCrud
 
 
@@ -284,3 +288,14 @@ class Job(_BaseResource):
 
     async def update(self, http_client: "APIClient", **kwargs):
         raise RuntimeError("This resource is not update-able")
+
+
+# Below are classes which do not have a corresponding resource in the API
+# but represent operations
+class ClusterConfigurations(object):
+    @classmethod
+    async def reload(cls, http_client: "APIClient", config_type: ConfigTypes):
+        await http_client.request_job(
+            f"configurations/{config_type.value}/reloads",
+            timeout=60 * 15,
+        )

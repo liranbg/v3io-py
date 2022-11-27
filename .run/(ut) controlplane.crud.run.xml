@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="(ut) controlplane.crud" type="tests" factoryName="Autodetect">
+  <configuration default="false" name="(ut) controlplane.cruds" type="tests" factoryName="Autodetect">
     <module name="v3io-py" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

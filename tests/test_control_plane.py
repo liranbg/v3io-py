@@ -43,11 +43,6 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
             await resource_to_delete.delete(self.client, ignore_missing=True)
         await self.client.close()
 
-    # async def test_misc(self):
-    #     client = await self._create_test_privilege_client()
-    #     await v3io.controlplane.crud.ClusterConfig.reload(client,
-    #                                                       v3io.controlplane.constants.ConfigTypes.events)
-    #
     async def test_custom_endpoint(self):
         versions = await self.client.request("GET", "/versions")
         self.assertNotEqual(0, len(versions))
@@ -177,6 +172,11 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
 
         # delete user group
         await user_group.delete(self.client)
+
+    async def test_misc(self):
+        client = await self._create_test_privilege_client()
+        await v3io.controlplane.ClusterConfigurations.reload(client, v3io.controlplane.constants.ConfigTypes.events)
+        await client.close()
 
     async def _create_dummy_user(self, username=None, password=None) -> "User":
         username = (
