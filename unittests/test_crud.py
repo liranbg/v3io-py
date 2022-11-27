@@ -1,15 +1,16 @@
 import unittest
 import json
 
-from v3io.controlplane.crud import Users, AccessKeys, UserGroups, Jobs
+from v3io.controlplane import User, AccessKey, UserGroup, Job
 from v3io.logger.logger import get_or_create_logger
 
 
+# TODO: fix this test file
 class TestCrud(unittest.TestCase):
     def setUp(self) -> None:
         self.logger = get_or_create_logger()
         self.logger.info_with("Starting test", test_id=self.id())
-        self._crud_modules = [Users, AccessKeys, UserGroups, Jobs]
+        self._crud_modules = [User, AccessKey, UserGroup, Job]
 
     def test_sanity(self):
         for model in self._crud_modules:
@@ -29,11 +30,12 @@ class TestCrud(unittest.TestCase):
             )
             self.assertEqual(dummy_data["id"], instance.id)
             for field, value in json.loads(
-                instance.attributes.json(exclude_unset=True)
+                instance.json(exclude_unset=True)
             ).items():
                 self.assertEqual(dummy_data["attributes"][field], value)
 
-    def _get_dummy_user(self):
+    @staticmethod
+    def _get_dummy_user():
         return {
             "data": {
                 "type": "user",
@@ -68,7 +70,8 @@ class TestCrud(unittest.TestCase):
             "meta": {"ctx": "11068862825860294136"},
         }
 
-    def _get_dummy_user_group(self):
+    @staticmethod
+    def _get_dummy_user_group():
         return {
             "data": {
                 "type": "user_group",
@@ -86,7 +89,8 @@ class TestCrud(unittest.TestCase):
             "meta": {"ctx": "13751516721665979787"},
         }
 
-    def _get_dummy_access_key(self):
+    @staticmethod
+    def _get_dummy_access_key():
         return {
             "data": {
                 "type": "access_key",
@@ -111,7 +115,8 @@ class TestCrud(unittest.TestCase):
             "meta": {"ctx": "10022211004627870368"},
         }
 
-    def _get_dummy_app_services_manifest(self):
+    @staticmethod
+    def _get_dummy_app_services_manifest():
         return {
             "data": [
                 {
@@ -151,7 +156,8 @@ class TestCrud(unittest.TestCase):
             "meta": {"ctx": "11480934097554558085"},
         }
 
-    def _get_dummy_job(self):
+    @staticmethod
+    def _get_dummy_job():
         return {
             "data": {
                 "type": "job",

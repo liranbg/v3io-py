@@ -14,11 +14,4 @@
 #
 
 from .client import APIClient as Client
-from .crud import (
-    Users,
-    UserGroups,
-    AccessKeys,
-    AppServicesManifests,
-    Jobs,
-    ClusterConfig,
-)
+from .resources import User, UserGroup, AccessKey, Job
