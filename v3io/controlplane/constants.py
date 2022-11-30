@@ -54,3 +54,14 @@ class JobStates(_BaseEnumStr):
             JobStates.failed.value,
             JobStates.canceled.value,
         ]
+
+
+class ApplyServicesMode(_BaseEnumStr):
+    default = "default"
+    scale_from_zero_only = "scale_from_zero_only"
+    service_owner_edit = "service_owner_edit"
+
+
+class ForceApplyAllMode(_BaseEnumStr):
+    enabled = "enabled"
+    disabled = "disabled"

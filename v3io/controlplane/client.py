@@ -7,13 +7,12 @@ import httpx
 
 import inflection
 
-from v3io.common.helpers import (
-    retry_until_successful,
-    RetryUntilSuccessfulInProgressErrorMessage,
-)
+from v3io.common.helpers import retry_until_successful
+
 import v3io.logger.logger
 
-from .constants import SessionPlanes, JobStates
+from v3io.controlplane.constants import SessionPlanes, JobStates
+from v3io.controlplane.exceptions import RetryUntilSuccessfulInProgressErrorMessage
 
 
 class _BaseHTTPClient:
@@ -86,7 +85,9 @@ class _BaseHTTPClient:
             ctx = response_json.get("meta", {}).get("ctx")
         except:
             pass
-        self._logger.debug_with("Received response", status_code=response.status_code, ctx=ctx)
+        self._logger.debug_with(
+            "Received response", status_code=response.status_code, ctx=ctx
+        )
         if response.is_error and response.status_code not in ignore_status_codes:
             log_kwargs = copy.deepcopy(kwargs)
             log_kwargs.update({"method": method, "path": path})

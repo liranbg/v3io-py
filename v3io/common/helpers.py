@@ -36,13 +36,6 @@ def url_join(base, *parts):
     return result
 
 
-class RetryUntilSuccessfulInProgressErrorMessage(Exception):
-    def __init__(self, message, *, variables=None):
-        super().__init__(message)
-        self.variables = variables if variables else {}
-        self.message = message
-
-
 def create_linear_backoff(base=2, coefficient=2, stop_value=120):
     """
     Create a generator of linear backoff. Check out usage example in test_helpers.py

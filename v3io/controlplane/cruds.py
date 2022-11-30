@@ -16,6 +16,8 @@ class _CrudFactory:
             return _AccessKeyCrud
         elif crud_type == "job":
             return _JobCrud
+        elif crud_type == "app_services_manifest":
+            return _AppServicesManifestCrud
         else:
             raise Exception("Unknown type")
 
@@ -81,3 +83,7 @@ class _AccessKeyCrud(_BaseCrud):
 
 class _JobCrud(_BaseCrud):
     pass
+
+
+class _AppServicesManifestCrud(_BaseCrud):
+    __ALLOW_GET_DETAIL__ = False

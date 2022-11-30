@@ -1,7 +1,6 @@
 import unittest
-import json
 
-from v3io.controlplane import User, AccessKey, UserGroup, Job
+from v3io.controlplane import User, AccessKey, UserGroup, Job, AppServicesManifest
 from v3io.logger.logger import get_or_create_logger
 
 
@@ -9,7 +8,7 @@ class TestCrud(unittest.TestCase):
     def setUp(self) -> None:
         self.logger = get_or_create_logger()
         self.logger.info_with("Starting test", test_id=self.id())
-        self._resources = [User, AccessKey, UserGroup, Job]
+        self._resources = [User, AccessKey, UserGroup, Job, AppServicesManifest]
 
     def test_sanity(self):
         for resource in self._resources:

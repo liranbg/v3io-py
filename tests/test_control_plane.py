@@ -6,13 +6,11 @@ import dotenv
 
 import v3io.controlplane
 
-# import v3io.controlplane.models
 import v3io.controlplane.constants
+from v3io.controlplane.exceptions import ResourceDeleteException, ResourceUpdateException, ResourceListException
 
-# import v3io.controlplane.client
 import v3io.common.helpers
 import v3io.logger.logger
-
 """
 This test is meant to be run against a live v3io control plane.
 To be able to run it, you need to set the following environment variables to be set on `hack/env/dev`
@@ -28,7 +26,9 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
         cls.logger = v3io.logger.logger.get_or_create_logger("DEBUG", "test_logger")
-        cls.config = dotenv.dotenv_values(f"hack/env/{os.getenv('TEST_ENV', 'dev')}")
+        absolute_path = os.path.dirname(__file__)
+        full_path = os.path.join(absolute_path, f"../hack/env/{os.getenv('TEST_ENV', 'dev')}")
+        cls.config = dotenv.dotenv_values(full_path)
 
     async def asyncSetUp(self):
         self.logger.info_with("Starting test", test_name=self._testMethodName)
@@ -54,14 +54,14 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         job = await v3io.controlplane.Job.get(client, jobs[0].id)
         self.assertEqual(jobs[0].id, job.id)
 
-        with self.assertRaises(RuntimeError) as exc:
+        with self.assertRaises(ResourceDeleteException) as exc:
             await job.delete(client)
         self.assertEqual(
             str(exc.exception),
             "This resource is not delete-able",
         )
 
-        with self.assertRaises(RuntimeError) as exc:
+        with self.assertRaises(ResourceUpdateException) as exc:
             await job.update(client)
         self.assertEqual(
             str(exc.exception),
@@ -177,6 +177,19 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         client = await self._create_test_privilege_client()
         await v3io.controlplane.ClusterConfigurations.reload(client, v3io.controlplane.constants.ConfigTypes.events)
         await client.close()
+
+    async def test_list_delete_update_get_app_services(self):
+        app_services_manifest = await v3io.controlplane.AppServicesManifest.get(self.client)
+        self.assertNotEqual(0, len(app_services_manifest.app_services))
+
+        with self.assertRaises(ResourceDeleteException):
+            await app_services_manifest.delete(self.client)
+
+        with self.assertRaises(ResourceUpdateException):
+            await app_services_manifest.update(self.client)
+
+        with self.assertRaises(ResourceListException):
+            await app_services_manifest.list(self.client)
 
     async def _create_dummy_user(self, username=None, password=None) -> "User":
         username = (

@@ -1,4 +1,3 @@
-import abc
 import typing
 import inflection
 
@@ -10,9 +9,16 @@ from v3io.controlplane.client import APIClient
 from v3io.controlplane.constants import (
     TenantManagementRoles,
     SessionPlanes,
-    ConfigTypes,
+    ApplyServicesMode,
+    ForceApplyAllMode,
 )
 from v3io.controlplane.cruds import _CrudFactory, _BaseCrud
+from v3io.controlplane.app_services import AppServiceBase
+from v3io.controlplane.exceptions import (
+    ResourceDeleteException,
+    ResourceUpdateException,
+    ResourceListException,
+)
 
 
 class _BaseResource(pydantic.BaseModel):
@@ -284,18 +290,35 @@ class Job(_BaseResource):
     ctx_id: str = ""
 
     async def delete(self, http_client: "APIClient", **kwargs):
-        raise RuntimeError("This resource is not delete-able")
+        raise ResourceDeleteException
 
     async def update(self, http_client: "APIClient", **kwargs):
-        raise RuntimeError("This resource is not update-able")
+        raise ResourceUpdateException
 
 
-# Below are classes which do not have a corresponding resource in the API
-# but represent operations
-class ClusterConfigurations(object):
+class AppServicesManifest(_BaseResource):
+    type: str = "app_services_manifest"
+    cluster_name: str = ""
+    tenant_name: str = ""
+    tenant_id: str = ""
+    app_services: typing.List[AppServiceBase] = []
+    state: str = ""
+    last_error: typing.Optional[str]
+    last_modification_job: str = ""
+    apply_services_mode: typing.Optional[ApplyServicesMode]
+    running_modification_job: str = ""
+    force_apply_all_mode: typing.Optional[ForceApplyAllMode]
+
+    async def delete(self, http_client: "APIClient", **kwargs):
+        raise ResourceDeleteException
+
+    async def update(self, http_client: "APIClient", **kwargs):
+        raise ResourceUpdateException
+
+    async def list(self, http_client: "APIClient", **kwargs):
+        raise ResourceListException
+
     @classmethod
-    async def reload(cls, http_client: "APIClient", config_type: ConfigTypes):
-        await http_client.request_job(
-            f"configurations/{config_type.value}/reloads",
-            timeout=60 * 15,
-        )
+    async def get(cls, http_client: APIClient) -> "AppServicesManifest":
+        resource = await cls.get_crud().list(http_client)
+        return [cls.from_orm({"data": item}) for item in resource["data"]][0]

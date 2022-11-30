@@ -14,4 +14,6 @@
 #
 
 from .client import APIClient as Client
-from .resources import User, UserGroup, AccessKey, Job, ClusterConfigurations
+from .resources import User, UserGroup, AccessKey, Job, AppServicesManifest
+from .operations import ClusterConfigurations
+from .app_services import AppServiceSpec, JupyterSpec
