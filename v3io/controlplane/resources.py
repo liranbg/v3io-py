@@ -319,6 +319,6 @@ class AppServicesManifest(_BaseResource):
         raise ResourceListException
 
     @classmethod
-    async def get(cls, http_client: APIClient) -> "AppServicesManifest":
+    async def get(cls, http_client: APIClient, **kwargs) -> "AppServicesManifest":
         resource = await cls.get_crud().list(http_client)
         return [cls.from_orm({"data": item}) for item in resource["data"]][0]
