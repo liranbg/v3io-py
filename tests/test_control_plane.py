@@ -7,10 +7,15 @@ import dotenv
 import v3io.controlplane
 
 import v3io.controlplane.constants
-from v3io.controlplane.exceptions import ResourceDeleteException, ResourceUpdateException, ResourceListException
+from v3io.controlplane.exceptions import (
+    ResourceDeleteException,
+    ResourceUpdateException,
+    ResourceListException,
+)
 
 import v3io.common.helpers
 import v3io.logger.logger
+
 """
 This test is meant to be run against a live v3io control plane.
 To be able to run it, you need to set the following environment variables to be set on `hack/env/dev`
@@ -27,7 +32,9 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
     def setUpClass(cls):
         cls.logger = v3io.logger.logger.get_or_create_logger("DEBUG", "test_logger")
         absolute_path = os.path.dirname(__file__)
-        full_path = os.path.join(absolute_path, f"../hack/env/{os.getenv('TEST_ENV', 'dev')}")
+        full_path = os.path.join(
+            absolute_path, f"../hack/env/{os.getenv('TEST_ENV', 'dev')}"
+        )
         cls.config = dotenv.dotenv_values(full_path)
 
     async def asyncSetUp(self):
@@ -157,14 +164,18 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         await user.add_to_group(self.client, user_group.id)
 
         # get user group and verify user is in it
-        user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
+        user_group = await v3io.controlplane.UserGroup.get(
+            self.client, user_group.id, include=["users"]
+        )
         self.assertEqual(1, len(user_group.relationships["users"]["data"]))
 
         # remove user from group
         await user.remove_from_group(self.client, user_group.id)
 
         # get user group and verify user is NOT in it
-        user_group = await v3io.controlplane.UserGroup.get(self.client, user_group.id, include=["users"])
+        user_group = await v3io.controlplane.UserGroup.get(
+            self.client, user_group.id, include=["users"]
+        )
         self.assertEqual(0, len(user_group.relationships))
 
         # delete user
@@ -175,11 +186,15 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
 
     async def test_misc(self):
         client = await self._create_test_privilege_client()
-        await v3io.controlplane.ClusterConfigurations.reload(client, v3io.controlplane.constants.ConfigTypes.events)
+        await v3io.controlplane.ClusterConfigurations.reload(
+            client, v3io.controlplane.constants.ConfigTypes.events
+        )
         await client.close()
 
     async def test_list_delete_update_get_app_services(self):
-        app_services_manifest = await v3io.controlplane.AppServicesManifest.get(self.client)
+        app_services_manifest = await v3io.controlplane.AppServicesManifest.get(
+            self.client
+        )
         self.assertNotEqual(0, len(app_services_manifest.app_services))
 
         with self.assertRaises(ResourceDeleteException):
