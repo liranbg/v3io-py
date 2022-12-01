@@ -10,7 +10,6 @@ import v3io.controlplane.constants
 from v3io.controlplane.exceptions import (
     ResourceDeleteException,
     ResourceUpdateException,
-    ResourceListException,
 )
 
 import v3io.common.helpers
@@ -61,6 +60,7 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         job = await v3io.controlplane.Job.get(client, jobs[0].id)
         self.assertEqual(jobs[0].id, job.id)
 
+        # TODO - move check exceptions (delete/update) to unittest file
         with self.assertRaises(ResourceDeleteException) as exc:
             await job.delete(client)
         self.assertEqual(
@@ -191,20 +191,11 @@ class TestControlPlane(unittest.IsolatedAsyncioTestCase):
         )
         await client.close()
 
-    async def test_list_delete_update_get_app_services(self):
+    async def test_get_app_services_manifest(self):
         app_services_manifest = await v3io.controlplane.AppServicesManifest.get(
             self.client
         )
         self.assertNotEqual(0, len(app_services_manifest.app_services))
-
-        with self.assertRaises(ResourceDeleteException):
-            await app_services_manifest.delete(self.client)
-
-        with self.assertRaises(ResourceUpdateException):
-            await app_services_manifest.update(self.client)
-
-        with self.assertRaises(ResourceListException):
-            await app_services_manifest.list(self.client)
 
     async def _create_dummy_user(self, username=None, password=None) -> "User":
         username = (

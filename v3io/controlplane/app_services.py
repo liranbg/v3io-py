@@ -100,6 +100,15 @@ class JupyterSpec(_Base):
     ssh_server: typing.Optional[_SSHServerSpec]
 
 
+class _AppServiceSpecFactory:
+    @staticmethod
+    def create(app_service_spec) -> str:
+        if app_service_spec is JupyterSpec:
+            return "jupyter"
+        else:
+            raise Exception("Unknown app service spec type")
+
+
 class AppServiceSpec(_Base):
     name: str
     kind: str
@@ -125,6 +134,17 @@ class AppServiceSpec(_Base):
     security_context: typing.Optional[_SecurityContextSpec]
     persistency_mode: typing.Optional[str]
     advanced: typing.Optional[_AdvancedSpec]
+
+    # TODO: change alias to be kind value after initialization
+    service_spec: typing.Any = pydantic.Field(alias="jupyter")
+
+    def __init__(self, **kwargs):
+        if "service_spec" in kwargs:
+            kwargs["kind"] = _AppServiceSpecFactory.create(type(kwargs["service_spec"]))
+        super().__init__(**kwargs)
+
+    class Config(pydantic.BaseConfig):
+        allow_population_by_field_name = True
 
 
 class AppServiceBase(_Base):

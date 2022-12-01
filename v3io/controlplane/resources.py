@@ -13,7 +13,7 @@ from v3io.controlplane.constants import (
     ForceApplyAllMode,
 )
 from v3io.controlplane.cruds import _CrudFactory, _BaseCrud
-from v3io.controlplane.app_services import AppServiceBase
+from v3io.controlplane.app_services import AppServiceBase, AppServiceSpec
 from v3io.controlplane.exceptions import (
     ResourceDeleteException,
     ResourceUpdateException,
@@ -289,10 +289,10 @@ class Job(_BaseResource):
     handler: str = ""
     ctx_id: str = ""
 
-    async def delete(self, http_client: "APIClient", **kwargs):
+    async def delete(self, http_client: APIClient, **kwargs):
         raise ResourceDeleteException
 
-    async def update(self, http_client: "APIClient", **kwargs):
+    async def update(self, http_client: APIClient, **kwargs):
         raise ResourceUpdateException
 
 
@@ -309,16 +309,37 @@ class AppServicesManifest(_BaseResource):
     running_modification_job: str = ""
     force_apply_all_mode: typing.Optional[ForceApplyAllMode]
 
-    async def delete(self, http_client: "APIClient", **kwargs):
+    async def delete(self, http_client: APIClient, **kwargs):
         raise ResourceDeleteException
 
-    async def update(self, http_client: "APIClient", **kwargs):
+    async def update(self, http_client: APIClient, **kwargs):
         raise ResourceUpdateException
 
-    async def list(self, http_client: "APIClient", **kwargs):
+    async def list(self, http_client: APIClient, **kwargs):
         raise ResourceListException
 
     @classmethod
     async def get(cls, http_client: APIClient, **kwargs) -> "AppServicesManifest":
         resource = await cls.get_crud().list(http_client)
         return [cls.from_orm({"data": item}) for item in resource["data"]][0]
+
+    def find(
+        self, app_service_spec_name: str, app_service_spec_kind: str
+    ) -> (AppServiceSpec, int):
+        position = 0
+        for app_service in self.app_services:
+            if (app_service.spec.name == app_service_spec_name) and (
+                app_service.spec.kind == app_service_spec_kind
+            ):
+                return app_service.spec, position
+            position += 1
+        return None, -1
+
+    def create_or_update(self, app_service_spec: AppServiceSpec):
+        app_service_spec_obj, position = self.find(
+            app_service_spec.name, app_service_spec.kind
+        )
+        if app_service_spec_obj:
+            self.app_services[position].spec = app_service_spec
+        else:
+            self.app_services.append(AppServiceBase(spec=app_service_spec))

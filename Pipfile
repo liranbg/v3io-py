@@ -8,6 +8,7 @@ flake8 = "*"
 twine = "*"
 python-dotenv = ">=0.21.0"
 black = ">=22.10.0"
+mock = ">=4.0.3"
 
 [packages]
 requests = ">=2.19.1"
