@@ -7,12 +7,13 @@ import httpx
 
 import inflection
 
-from v3io.common.helpers import retry_until_successful
-
+from v3io.common.helpers import (
+    retry_until_successful,
+    RetryUntilSuccessfulInProgressErrorMessage,
+)
 import v3io.logger.logger
 
 from v3io.controlplane.constants import SessionPlanes, JobStates
-from v3io.controlplane.exceptions import RetryUntilSuccessfulInProgressErrorMessage
 
 
 class _BaseHTTPClient:
